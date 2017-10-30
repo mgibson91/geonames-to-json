@@ -49,14 +49,14 @@ function populateCache() {
 }
 
 function loadCountryData() {
-    countries = fs.readFileSync('./countries.json', 'utf8');
+    countries = fs.readFileSync('./data/countries.json', 'utf8');
 }
 
 function loadCityData() {
-    fs.readdirSync('./cities').forEach(file => {
+    fs.readdirSync('./data/cities').forEach(file => {
 
         const countryCode = file.slice(0, 2);
-        const countryCities = fs.readFileSync('./cities/' + file, 'utf8');
+        const countryCities = fs.readFileSync('./data/cities/' + file, 'utf8');
 
         cities[countryCode] = countryCities;
     });

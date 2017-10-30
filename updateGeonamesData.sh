@@ -33,7 +33,7 @@ fi
 
 dataDir="data"
 rm -rf "$dataDir"
-mkdir -P "$dataDir"/cities
+mkdir -p "$dataDir"/cities
 
 # Go to data directory
 cd "$dataDir"

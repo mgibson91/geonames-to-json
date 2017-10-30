@@ -1,0 +1,20 @@
+NOTE: Requires running MySQL database
+
+# Setup:
+1. Create dbConfig.js which exports the following details:
+
+    module.exports = {
+     "host" : "<host>",
+     "user" : "<user>",
+     "password" : "<password>",
+     "database" : "<databaseName>"
+    }
+
+2. Run ./updateGeonamesData.sh -u <user> -p <password> -d <databaseName>
+3. Start server: 'node index'
+
+
+# Usage:
+Country list: curl localhost:8000/countries
+City list:    curl localhost:8000/cities?country=ZW (Requires country ISO2 code)
+
