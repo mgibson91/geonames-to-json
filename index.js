@@ -1,11 +1,11 @@
 const fs      = require('fs');
-const express = require('express')
+const express = require('express');
 
 let countries = {};
 let cities    = {};
 populateCache();
 
-app = express()
+app = express();
 
 app.use(function(req, res, next)
 {
@@ -17,7 +17,7 @@ app.use(function(req, res, next)
 /** Start server */
 app.listen(8000, function () {
     console.log('Location server started');
-})
+});
 
 /** Return JSON array of countries */
 app.get('/countries', function (req, res) {
@@ -28,14 +28,47 @@ app.get('/countries', function (req, res) {
 /** Return JSON array of cities for requested country code */
 app.get('/cities', function (req, res) {
 
-    country = res.req.query.country;
+    const reqCountry = res.req.query.country;
+    if (!reqCountry) {
+        res.status(500);
+        res.send('No country specified\n');
+        return;
+    }
 
-    if (country) {
-        if (!cities.hasOwnProperty(country)) {
+    let countryIso;
+
+    // If not ISO2 format, convert to IS02
+    if (reqCountry.length > 2) {
+        // TODO: Catch JSON parse error
+        const matches = JSON.parse(countries).filter(
+            function(country){
+               return reqCountry.toLowerCase() === country.name.toLowerCase();
+            });
+
+        // If not ISO format but the name can't be found either, return error.
+        if (matches.length == 0) {
+            res.status(500);
+            res.send('Invalid country\n');
+            return;
+        } else if (matches.length > 1) {
+            res.status(500);
+            res.send('Error. Multiple country matches returned for ' + reqCountry + '\n');
+            return;
+        }
+
+        // A corresponding ISO code has been found using the country name
+        countryIso = matches[0].iso;
+
+    } else {
+        countryIso = reqCountry.toUpperCase();
+    }
+
+    if (countryIso) {
+        if (!cities.hasOwnProperty(countryIso)) {
             res.status(500);
             res.send('Unknown city\n');
         }
-        res.send(JSON.stringify(cities[country]));
+        res.send(JSON.stringify(cities[countryIso]));
     }
     else {
         res.status(500);

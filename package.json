@@ -7,9 +7,13 @@
     "express": "^4.16.2",
     "mysql": "^2.15.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "axios": "^0.17.0",
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "mgibson91",
   "license": "MIT"

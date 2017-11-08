@@ -31,20 +31,14 @@ elif [[ -z "${database// }" ]]; then
     exit 1
 fi
 
-dataDir="data"
-rm -rf "$dataDir"
-mkdir -p "$dataDir"/cities
-
-# Go to data directory
-cd "$dataDir"
+downloadDir="./download"
+rm -rf ${downloadDir}
+mkdir ${downloadDir}
 
 # Download and unzip country/city info
-wget http://download.geonames.org/export/dump/countryInfo.txt
-wget http://download.geonames.org/export/dump/cities15000.zip
-unzip cities15000.zip
-
-# Go back to previous directory
-cd -
+wget http://download.geonames.org/export/dump/countryInfo.txt -O ${downloadDir}/countryInfo.txt
+wget http://download.geonames.org/export/dump/cities15000.zip -O ${downloadDir}/cities15000.zip
+unzip ${downloadDir}/cities15000.zip -d ${downloadDir}
 
 mysql -u"$user" -p"$password" "$database" < createGeonameSchema.sql
 mysql -u"$user" -p"$password" "$database" < importGeonameDataIntoDatabase.sql

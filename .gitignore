@@ -1,6 +1,4 @@
 dbConfig.js
 .idea*
-cities15000*
-countryInfo.txt
 node_modules
-cities
+update/download
