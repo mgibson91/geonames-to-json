@@ -4,12 +4,9 @@ const axios = require('axios').create({
     baseURL: 'http://localhost:8000'
 });
 
+// Returns true if exactly one match is found
 function checkForCountry(countries, expectedIso, expectedName) {
-    const matches = countries.filter(function(country) {
-        return (country.iso == expectedIso && country.name == expectedName);
-    })
-
-    return matches.length == 1;
+    return countries.filter((country) => (country.iso == expectedIso && country.name == expectedName)).length == 1;
 }
 
 function verifyCountries(countries) {
@@ -28,15 +25,15 @@ function verifyGbCities(cities) {
     assert(cities.indexOf('Belfast') > -1);
 }
 
-describe('Geonames service tests', function() {
-    describe('Countries', function() {
-        it ('Should correctly return a range of known countries', function(){
+describe('Geonames service tests', () => {
+    describe('Countries', () => {
+        it ('Should correctly return a range of known countries', () => {
             return axios.get('/countries')
                 .then((response) => {verifyCountries(JSON.parse(response.data));})
                 .catch((error) =>   {assert.fail(error);})
         })
 
-        it ('Should respond with 404 if incorrect parameter is sent', function(){
+        it ('Should respond with 404 if incorrect parameter is sent', () => {
             return axios.get('/incorrect')
                 .then((response) => {assert.fail('Incorrect call should have failed');})
                 .catch((error)   => {assert.equal(error.response.status, 404)})

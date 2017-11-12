@@ -1,11 +1,13 @@
 const fs      = require('fs');
 const express = require('express');
+const bodyParser = require('body-parser');
 
 let countries = {};
 let cities    = {};
 populateCache();
 
-app = express();
+let app = express();
+app.use(bodyParser.json());
 
 app.use(function(req, res, next)
 {
@@ -15,7 +17,8 @@ app.use(function(req, res, next)
 });
 
 /** Start server */
-app.listen(8000, function () {
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, function () {
     console.log('Location server started');
 });
 
@@ -30,51 +33,138 @@ app.get('/cities', function (req, res) {
 
     const reqCountry = res.req.query.country;
     if (!reqCountry) {
-        res.status(500);
-        res.send('No country specified\n');
-        return;
+        return errorMessage(res, 500, 'No country specified');
     }
 
     let countryIso;
 
     // If not ISO2 format, convert to IS02
     if (reqCountry.length > 2) {
-        // TODO: Catch JSON parse error
-        const matches = JSON.parse(countries).filter(
-            function(country){
-               return reqCountry.toLowerCase() === country.name.toLowerCase();
-            });
 
-        // If not ISO format but the name can't be found either, return error.
-        if (matches.length == 0) {
-            res.status(500);
-            res.send('Invalid country\n');
-            return;
-        } else if (matches.length > 1) {
-            res.status(500);
-            res.send('Error. Multiple country matches returned for ' + reqCountry + '\n');
-            return;
+        const isoResult = getIsoFromCountryName(reqCountry);
+        if (isoResult.error) {
+            return errorMessage(res, 500, isoResult.error);
         }
-
-        // A corresponding ISO code has been found using the country name
-        countryIso = matches[0].iso;
-
-    } else {
+        else {
+            countryIso = matches[0].iso;
+        }
+    }
+    else {
         countryIso = reqCountry.toUpperCase();
     }
 
+    // Get city data using ISO code
     if (countryIso) {
         if (!cities.hasOwnProperty(countryIso)) {
-            res.status(500);
-            res.send('Unknown city\n');
+            return errorMessage(res, 500, 'Unknown city');
         }
-        res.send(JSON.stringify(cities[countryIso]));
+        return res.send(JSON.stringify(cities[countryIso]));
     }
     else {
-        res.status(500);
-        res.send('Unable to get city data\n');
+        return errorMessage(res, 500, 'Unable to get city data');
     }
 });
+
+/**
+ * Checks if a given country is valid
+ *
+ * 200 Success: {valid: boolean}
+ * 200 Failure: {valid: boolean, error: string}
+ *
+ * 500 Failure: {error: string}
+ */
+app.get('/valid/country', function (req, res) {
+
+    if (!req.body.country) {
+        return errorMessage(res, 500, 'No country specified');
+    }
+
+    const isoResult = getIsoFromCountry(req.body.country);
+    if (isoResult.error) {
+        return res.send(JSON.stringify({valid: false, error: isoResult.error}));
+    }
+    else {
+        return res.send(JSON.stringify({valid: true}));
+    }
+});
+
+/**
+ * Checks if a given country : city pair is valid
+ *
+ * 200 Success: {valid: boolean}
+ * 200 Failure: {valid: boolean, error: string}
+ *
+ * 500 Failure: {error: string}
+ */
+app.get('/valid/city', function (req, res) {
+
+    if (!res.req.query.country) {
+        return errorMessage(res, 500, 'No country specified');
+    }
+
+    const isoResult = getIsoFromCountry(req.body.country);
+    if (isoResult.error) {
+        return res.send(JSON.stringify({valid: false, error: isoResult.error}));
+    }
+
+    if (!res.req.query.city) {
+        return errorMessage(res, 500, 'No city specified');
+    }
+
+    if (!cities.hasOwnProperty(isoResult.iso)) {
+        return res.send(JSON.stringify({valid: false, error: 'Unknown city'}));
+    }
+    else {
+        return res.send(JSON.stringify({valid: true}));
+    }
+});
+
+function errorMessage(res, code, message) {
+    if (res) {
+        if (message) {
+            res.status(code);
+            res.contentType("application/json");
+            res.send({error: message});
+        }
+        else {
+            res.sendStatus(code);
+            res.end();
+        }
+    }
+}
+
+/**
+ * Returns the ISO2 for a country name if it exists.
+ *
+ * On success, result.iso will be populated and result.error will be empty
+ * On failure, result.iso will be empty and result.error will be populated
+ *
+ * @param {string} requestedCountry
+ * @returns {iso: string, error: string}
+ */
+function getIsoFromCountryName(requestedCountry) {
+    const matches = JSON.parse(countries).filter((country) => {
+            return requestedCountry.toLowerCase() === country.name.toLowerCase();
+        });
+
+    // Failure: Country can't be found
+    if (matches.length == 0) {
+         return {iso: '', error: 'Unable to find data for country: ' + requestedCountry}
+    }
+    // Failure: Ambiguous multiple results (should never happen)
+    else if (matches.length > 1) {
+        return {iso: '', error: 'Ambiguous result, multiple country matches returned for ' + requestedCountry +
+                                '. Try request with ISO code instead'};
+    }
+    // Failure: No ISO code found (should never happen if the data is generated consistently)
+    else if (!matches.iso) {
+        return {iso: '', error: 'No ISO code found for this country'};
+    }
+    // Success: Return ISO code
+    else {
+        return {iso: matches[0].iso, error: ''};
+    }
+}
 
 function populateCache() {
     loadCountryData();
