@@ -1,7 +1,7 @@
 const assert  = require('assert')
 
 const axios = require('axios').create({
-    baseURL: 'http://localhost:8000'
+    baseURL: 'http://localhost:' + process.env.PORT || 8080
 });
 
 // Returns true if exactly one match is found

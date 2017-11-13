@@ -36,29 +36,17 @@ app.get('/cities', function (req, res) {
         return errorMessage(res, 500, 'No country specified');
     }
 
-    let countryIso;
-
-    // If not ISO2 format, convert to IS02
-    if (reqCountry.length > 2) {
-
-        const isoResult = getIsoFromCountryName(reqCountry);
-        if (isoResult.error) {
-            return errorMessage(res, 500, isoResult.error);
-        }
-        else {
-            countryIso = matches[0].iso;
-        }
-    }
-    else {
-        countryIso = reqCountry.toUpperCase();
+    const isoResult = getIsoFromCountry(reqCountry);
+    if (isoResult.error) {
+        return errorMessage(res, 500, isoResult.error);
     }
 
     // Get city data using ISO code
-    if (countryIso) {
-        if (!cities.hasOwnProperty(countryIso)) {
+    if (isoResult.iso) {
+        if (!cities.hasOwnProperty(isoResult.iso)) {
             return errorMessage(res, 500, 'Unknown city');
         }
-        return res.send(JSON.stringify(cities[countryIso]));
+        return res.send(JSON.stringify(cities[isoResult.iso]));
     }
     else {
         return errorMessage(res, 500, 'Unable to get city data');
@@ -75,11 +63,11 @@ app.get('/cities', function (req, res) {
  */
 app.get('/valid/country', function (req, res) {
 
-    if (!req.body.country) {
+    if (!req.query.country) {
         return errorMessage(res, 500, 'No country specified');
     }
 
-    const isoResult = getIsoFromCountry(req.body.country);
+    const isoResult = getIsoFromCountry(req.query.country);
     if (isoResult.error) {
         return res.send(JSON.stringify({valid: false, error: isoResult.error}));
     }
@@ -142,27 +130,35 @@ function errorMessage(res, code, message) {
  * @param {string} requestedCountry
  * @returns {iso: string, error: string}
  */
-function getIsoFromCountryName(requestedCountry) {
+function getIsoFromCountry(reqCountry) {
+
+    if (reqCountry.length == 2) {
+        // Process ISO2 requests
+        const upperCaseIso = reqCountry.toUpperCase();
+        return cities.hasOwnProperty(upperCaseIso) ? {iso: upperCaseIso} : {error: 'Unknown ISO2 code: ' + upperCaseIso};
+    }
+
+    // Check for any matches in countries for reqCountry
     const matches = JSON.parse(countries).filter((country) => {
-            return requestedCountry.toLowerCase() === country.name.toLowerCase();
+            return reqCountry.toLowerCase() === country.name.toLowerCase();
         });
 
     // Failure: Country can't be found
     if (matches.length == 0) {
-         return {iso: '', error: 'Unable to find data for country: ' + requestedCountry}
+         return {error: 'Unable to find data for country: ' + reqCountry}
     }
     // Failure: Ambiguous multiple results (should never happen)
     else if (matches.length > 1) {
-        return {iso: '', error: 'Ambiguous result, multiple country matches returned for ' + requestedCountry +
+        return {error: 'Ambiguous result, multiple country matches returned for ' + reqCountry +
                                 '. Try request with ISO code instead'};
     }
     // Failure: No ISO code found (should never happen if the data is generated consistently)
-    else if (!matches.iso) {
-        return {iso: '', error: 'No ISO code found for this country'};
+    else if (!matches[0].iso) {
+        return {error: 'No ISO code found for this country'};
     }
     // Success: Return ISO code
     else {
-        return {iso: matches[0].iso, error: ''};
+        return {iso: matches[0].iso};
     }
 }
 
