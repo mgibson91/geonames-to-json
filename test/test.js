@@ -25,12 +25,21 @@ function verifyGbCities(cities) {
     assert(cities.indexOf('Belfast') > -1);
 }
 
+function buildGetRequest(url, data) {
+    return {
+        method: 'GET',
+        url: url,
+        headers: {'Content-Type': 'application/json'},
+        data: data
+    }
+}
+
 describe('Geonames service tests', () => {
     describe('Countries', () => {
         it ('Should correctly return a range of known countries', () => {
             return axios.get('/countries')
                 .then((response) => {verifyCountries(JSON.parse(response.data));})
-                .catch((error) =>   {assert.fail(error);})
+                .catch((error)   => {assert.fail(error);})
         })
 
         it ('Should respond with 404 if incorrect parameter is sent', () => {
@@ -46,33 +55,21 @@ describe('Geonames service tests', () => {
         describe('Should be able to query cities using country ISO2 code', () => {
 
             it('GB - UPPER CASE', () => {
-                return axios.get('/cities?country=GB')
-                    .then((response) => {
-                        verifyGbCities(JSON.parse(response.data));
-                    })
-                    .catch((error) => {
-                        assert.fail(error);
-                    })
+                return axios(buildGetRequest('/cities', {country: 'GB'}))
+                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                    .catch((error)   => {assert.fail(error);})
             })
 
             it('gb - lower case', () => {
-                return axios.get('/cities?country=gb')
-                    .then((response) => {
-                        verifyGbCities(JSON.parse(response.data));
-                    })
-                    .catch((error) => {
-                        assert.fail(error);
-                    })
+                return axios(buildGetRequest('/cities', {country: 'gb'}))
+                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                    .catch((error)   => {assert.fail(error);})
             })
 
             it('gB - mixed case', () => {
-                return axios.get('/cities?country=gB')
-                    .then((response) => {
-                        verifyGbCities(JSON.parse(response.data));
-                    })
-                    .catch((error) => {
-                        assert.fail(error);
-                    })
+                return axios(buildGetRequest('/cities', {country: 'Gb'}))
+                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                    .catch((error)   => {assert.fail(error);})
             })
         })
 
@@ -80,59 +77,67 @@ describe('Geonames service tests', () => {
         describe('Should be able to query cities using country name', () => {
 
             it ('UNITED KINGDOM - UPPER CASE', () => {
-                return axios.get('/cities?country=UNITED KINGDOM')
+                return axios(buildGetRequest('/cities', {country: 'UNITED KINGDOM'}))
                     .then((response) => {verifyGbCities(JSON.parse(response.data));})
-                    .catch((error) =>   {assert.fail(error);})
+                    .catch((error)   => {assert.fail(error);})
             })
 
             it ('United Kingdom - Mixed Case', () => {
-                return axios.get('/cities?country=United Kingdom')
+                return axios(buildGetRequest('/cities', {country: 'United Kingdom'}))
                     .then((response) => {verifyGbCities(JSON.parse(response.data));})
-                    .catch((error) =>   {assert.fail(error);})
+                    .catch((error)   => {assert.fail(error);})
             })
 
             it ('united kingdom - lower case', () => {
-                return axios.get('/cities?country=united kingdom')
+                return axios(buildGetRequest('/cities', {country: 'united kingdom'}))
                     .then((response) => {verifyGbCities(JSON.parse(response.data));})
-                    .catch((error) =>   {assert.fail(error);})
+                    .catch((error)   => {assert.fail(error);})
             })
         })
 
         // Invalid queries
         describe('Handling invalid queries', () => {
             it ('Unknown country - /cities?country=Unknown', () => {
-                return axios.get('/cities?country=Unknown')
-                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                return axios(buildGetRequest('/cities', {country: 'Unknown'}))
+                    .then((response) => {
+                        verifyGbCities(JSON.parse(response.data));
+                    })
                     .catch((error) =>   {
                         assert.equal(error.response.status, 500);
-                        assert.equal(error.response.data, 'Invalid country\n');
+                        assert(error.response.data.error.includes('Unable to find data for country'));
                     })
             })
 
             it ('No country value - /cities?country', () => {
                 return axios.get('/cities?country')
-                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                    .then((response) => {
+                        verifyGbCities(JSON.parse(response.data));
+                    })
                     .catch((error) =>   {
                         assert.equal(error.response.status, 500);
-                        assert.equal(error.response.data, 'No country specified\n');
+                        assert(error.response.data.error.includes('No country specified'));
                     })
             })
 
             it ('No country parameter - /cities?', () => {
                 return axios.get('/cities?')
-                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                    .then((response) => {
+                        verifyGbCities(JSON.parse(response.data));
+                    })
                     .catch((error) =>   {
                         assert.equal(error.response.status, 500);
-                        assert.equal(error.response.data, 'No country specified\n');
+                        assert(error.response.data.error.includes('No country specified'));
                     })
             })
 
             it ('No query parameter - /cities', () => {
                 return axios.get('/cities')
-                    .then((response) => {verifyGbCities(JSON.parse(response.data));})
+                    .then((response) => {
+                        verifyGbCities(JSON.parse(response.data));
+                    })
                     .catch((error) =>   {
                         assert.equal(error.response.status, 500);
-                        assert.equal(error.response.data, 'No country specified\n');
+                        assert(error.response.data.error.includes('No country specified'));
                     })
             })
         })

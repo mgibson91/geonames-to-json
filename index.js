@@ -31,7 +31,7 @@ app.get('/countries', function (req, res) {
 /** Return JSON array of cities for requested country code */
 app.get('/cities', function (req, res) {
 
-    const reqCountry = res.req.query.country;
+    const reqCountry = req.body.country;
     if (!reqCountry) {
         return errorMessage(res, 500, 'No country specified');
     }
@@ -63,11 +63,11 @@ app.get('/cities', function (req, res) {
  */
 app.get('/valid/country', function (req, res) {
 
-    if (!req.query.country) {
+    if (!req.body.country) {
         return errorMessage(res, 500, 'No country specified');
     }
 
-    const isoResult = getIsoFromCountry(req.query.country);
+    const isoResult = getIsoFromCountry(req.body.country);
     if (isoResult.error) {
         return res.send(JSON.stringify({valid: false, error: isoResult.error}));
     }
@@ -86,7 +86,7 @@ app.get('/valid/country', function (req, res) {
  */
 app.get('/valid/city', function (req, res) {
 
-    if (!res.req.query.country) {
+    if (!req.body.country) {
         return errorMessage(res, 500, 'No country specified');
     }
 
@@ -95,7 +95,7 @@ app.get('/valid/city', function (req, res) {
         return res.send(JSON.stringify({valid: false, error: isoResult.error}));
     }
 
-    if (!res.req.query.city) {
+    if (!req.body.city) {
         return errorMessage(res, 500, 'No city specified');
     }
 
@@ -180,3 +180,5 @@ function loadCityData() {
         cities[countryCode] = countryCities;
     });
 }
+
+/* curl localhost:8080/cities -H "Content-Type: application/json" -d '{"country":"gb"}' */
