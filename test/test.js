@@ -141,5 +141,100 @@ describe('Geonames service tests', () => {
                     })
             })
         })
+
+        // Testing the validation queries
+        describe('Validation - Country', () => {
+
+            describe('Should report valid countries as valid - ISO2', () => {
+
+                it ('UPPER CASE - GB', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'GB'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('lower case - gb', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'gb'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('Mixed Case - Gb', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'Gb'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+            })
+
+            describe('Should report valid countries as valid - country name', () => {
+
+                it ('UPPER CASE - UNITED KINGDOM', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'UNITED KINGDOM'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('lower case - united kingdom', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'united kingdom'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('Mixed Case - United Kingdom', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'United Kingdom'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+            })
+
+            describe('Should report invalid countries as invalid', () => {
+                it ('Country: Unknown', () => {
+                    return axios(buildGetRequest('/valid/country', {country: 'Unknown'}))
+                        .then((response) => {assert.equal(response.data.valid, false)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('Should report 500 error when no country parameter specified', () => {
+                    return axios.get('/valid/country')
+                        .then((response) => {assert.equal(response.data.valid, false)})
+                        .catch((error) =>   {
+                            assert.equal(error.response.status, 500);
+                            assert(error.response.data.error.includes('No country specified'));
+                        })
+                })
+            })
+        })
+
+        describe('Validation - Cities', () => {
+                it ('Should report valid cities as valid', () => {
+                    return axios(buildGetRequest('/valid/city', {country: 'GB', city: 'London'}))
+                        .then((response) => {assert.equal(response.data.valid, true)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('Should report invalid cities as invalid', () => {
+                    return axios(buildGetRequest('/valid/city', {country: 'GB', city: 'Londonn'}))
+                        .then((response) => {assert.equal(response.data.valid, false)})
+                        .catch((error) =>   {assert.fail(error);})
+                })
+
+                it ('Should report 500 error when no country is specified', () => {
+                    return axios(buildGetRequest('/valid/city', {city: 'Londonn'}))
+                        .then((response) => {assert.fail('Expected 500 failure')})
+                        .catch((error) =>   {
+                            assert.equal(error.response.status, 500);
+                            assert(error.response.data.error.includes('No country specified'));
+                        })
+                })
+
+                it ('Should report 500 error when no city is specified', () => {
+                    return axios(buildGetRequest('/valid/city', {country: 'GB'}))
+                        .then((response) => {assert.fail('Expected 500 failure')})
+                        .catch((error) =>   {
+                            assert.equal(error.response.status, 500);
+                            assert(error.response.data.error.includes('No city specified'));
+                        })
+                })
+        })
     })
 })

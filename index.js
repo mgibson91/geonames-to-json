@@ -99,7 +99,8 @@ app.get('/valid/city', function (req, res) {
         return errorMessage(res, 500, 'No city specified');
     }
 
-    if (!cities.hasOwnProperty(isoResult.iso)) {
+    // At this point, we know cities contains an entry for the requested country as getIsoFromCountry was successful
+    if (!cities[isoResult.iso].includes(req.body.city)) {
         return res.send(JSON.stringify({valid: false, error: 'Unknown city'}));
     }
     else {
@@ -181,4 +182,5 @@ function loadCityData() {
     });
 }
 
-/* curl localhost:8080/cities -H "Content-Type: application/json" -d '{"country":"gb"}' */
+/* curl -X GET localhost:8080/cities -H "Content-Type: application/json" -d '{"country":"gb"}' */
+/* curl -X GET localhost:8080/valid -H "Content-Type: application/json" -d '{"country":"gb"}' */
