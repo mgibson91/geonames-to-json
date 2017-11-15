@@ -13,6 +13,7 @@
     "mocha": "^4.0.1"
   },
   "scripts": {
+    "start": "node server",
     "test": "mocha"
   },
   "author": "mgibson91",
