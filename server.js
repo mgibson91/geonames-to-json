@@ -29,7 +29,7 @@ app.get('/countries', function (req, res) {
 });
 
 /** Return JSON array of cities for requested country code */
-app.get('/cities', function (req, res) {
+app.post('/cities', function (req, res) {
 
     const reqCountry = req.body.country;
     if (!reqCountry) {
@@ -61,7 +61,7 @@ app.get('/cities', function (req, res) {
  *
  * 500 Failure: {error: string}
  */
-app.get('/valid/country', function (req, res) {
+app.post('/valid/country', function (req, res) {
 
     if (!req.body.country) {
         return errorMessage(res, 500, 'No country specified');
@@ -84,7 +84,7 @@ app.get('/valid/country', function (req, res) {
  *
  * 500 Failure: {error: string}
  */
-app.get('/valid/city', function (req, res) {
+app.post('/valid/city', function (req, res) {
 
     if (!req.body.country) {
         return errorMessage(res, 500, 'No country specified');
